@@ -61,9 +61,8 @@ def concatenation_based_attention(
         attention_context_vector = tf.tile(attention_context_vector, [batch_size, 1, 1])
         model_inputs = tf.nn.xw_plus_b(hidden_states, W_1, b_1) + tf.nn.xw_plus_b(dt, W_2, b_2)
 
-        input_projection = layers.fully_connected(
-            model_inputs, num_units, activation_fn=activation_fn
-        )
+        input_projection = tf.nn.tanh(model_inputs)
+        
         u = tf.matmul(input_projection, attention_context_vector)
         u = tf.reshape(u, shape=[batch_size, 1, -1])
         alpha = tf.nn.softmax(u)
