@@ -2,9 +2,8 @@
 '''
 @Author: yanwii
 @Date: 2018-08-14 17:33:16
-
-
 '''
+
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 
@@ -71,18 +70,18 @@ def concatenation_based_attention(
         d = tf.matmul(alpha, hidden_states)
         return d, alpha
 
-
-with tf.Session() as sess:
-    hidden, alpha = concatenation_based_attention(
-        [
-            [[0.1, 0.03, 0.003], [4.0, 5.0, 6.0]]
-        ],
-        [
-            [[7.0, 8.0, 9.0]]
-        ],
-        1,
-        3
-    )
-    sess.run(tf.global_variables_initializer())
-    print(hidden.eval())
-    print(alpha.eval())
+if __name__ == "__main__":
+    with tf.Session() as sess:
+        hidden, alpha = concatenation_based_attention(
+            [
+                [[0.1, 0.03, 0.003], [4.0, 5.0, 6.0]]
+            ],
+            [
+                [[7.0, 8.0, 9.0]]
+            ],
+            1,
+            3
+        )
+        sess.run(tf.global_variables_initializer())
+        print(hidden.eval())
+        print(alpha.eval())
