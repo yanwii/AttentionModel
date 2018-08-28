@@ -75,7 +75,6 @@ def concatenation_based_attention(
 def location_based_attention(
     hidden_states,
     num_units,
-    attention_size,
     initializer=layers.xavier_initializer(), 
     activation_fn=tf.tanh
     ):
@@ -85,39 +84,28 @@ def location_based_attention(
         args:
             `hiddent_state`: the hidden states of encoder which shape is [batch_size, time_steps, num_units]
             `num_units`: num of the LSTM cell's hidden size
-            `attention_size`: size of attention context vector
     '''
 
     with tf.variable_scope("attenstion_location") as scope:
         batch_size = tf.shape(hidden_states)[0]
-        attention_context_vector = tf.get_variable(
-            name="attention_context_vector",
-            shape=[1, attention_size, 1],
-            initializer=initializer,
-            dtype=tf.float32
-        )
         W_1 = tf.get_variable(
             name="W_1",
-            shape=[1, num_units, attention_size],
+            shape=[num_units, 1],
             initializer=initializer,
             dtype=tf.float32
         )
         b_1 = tf.get_variable(
             "b_1", 
-            shape=[attention_size], 
+            shape=[1], 
             dtype=tf.float32,
             initializer=initializer
         )
-
-        W_1 = tf.tile(W_1, [batch_size, 1, 1])  # [B x D x A]
-        attention_context_vector = tf.tile(attention_context_vector, [batch_size, 1, 1])  # [B x A x 1]
+        hidden = tf.reshape(hidden_states, shape=[-1, num_units])
         
-        model_inputs = tf.nn.xw_plus_b(hidden_states, W_1, b_1) # [B x T x D] * [B x D x A] => [B x T x A]
-        input_projection = tf.nn.tanh(model_inputs)  # [B x T x A]
-        
-        u = tf.matmul(input_projection, attention_context_vector) # [B x T x A] * [B x A x 1] => [B x T x 1]
-        u = tf.reshape(u, shape=[batch_size, 1, -1])  # [B x T x 1] => [B x 1 x T]
-
+        model_inputs = tf.nn.xw_plus_b(hidden, W_1, b_1) # [BT x D] * [D x 1] => [BT x 1]
+        input_projection = tf.nn.tanh(model_inputs)  # [BT x 1]
+ 
+        u = tf.reshape(input_projection, shape=[batch_size, 1, -1])  # [BT x 1] => [B x 1 x T]
         alpha = tf.nn.softmax(u)  # [B x 1 x T]
         d = tf.matmul(alpha, hidden_states) # [B x 1 x T] * [B x T x D] => [B x 1 x D]
         return d, alpha
@@ -143,8 +131,7 @@ if __name__ == "__main__":
                 [[0.1, 0.03, 0.003], [4.0, 5.0, 6.0]],
                 [[0.1, 0.03, 0.003], [1.0, 3.0, 1.0]]
             ],
-            3,
-            100
+            3
         )
         sess.run(tf.global_variables_initializer())
         print(hidden.eval())
